@@ -10,3 +10,7 @@ static/Build
 *.pid
 *.log.*
 *.log
+bin/
+include/
+lib/
+local/
