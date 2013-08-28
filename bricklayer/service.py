@@ -1,38 +1,36 @@
 import sys
 import os
 import logging
-sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 import pystache
 
-from twisted.application import internet, service
-from twisted.internet import protocol, task, threads, reactor, defer
-from twisted.protocols import basic
-from twisted.python import log
+from twisted.application  import internet, service
+from twisted.internet     import protocol, task, threads, reactor, defer
+from twisted.protocols    import basic
+from twisted.python       import log
 
-from bricklayer import builder
-from bricklayer.builder import Builder, build_project
-from bricklayer.projects import Projects
-from bricklayer.git import Git
-from bricklayer.config import BrickConfig
-from bricklayer.rest import restApp
+from bricklayer           import builder
+from bricklayer.builder   import Builder, build_project
+from bricklayer.projects  import Projects
+from bricklayer.git       import Git
+from bricklayer.config    import BrickConfig
+from bricklayer.rest      import restApp
 
 class BricklayerService(service.Service):
 
     def __init__(self):
         log.msg("scheduler: init")
         self.sched_task = task.LoopingCall(self.sched_builder)
-    
+
     def send_job(self, project_name, branch, release, version):
         log.msg('sched build: %s [%s:%s]' % (project_name, release, version))
         brickconfig = BrickConfig()
-        #queue = Dreque(brickconfig.get('redis', 'redis-server'))
-        #queue.enqueue('build', 'builder.build_project', {
+
         builder.build_project({
-            'project': project_name, 
-            'branch': branch, 
-            'release': release, 
+            'project': project_name,
+            'branch': branch,
+            'release': release,
             'version': version,
-            })
+        })
 
     def sched_builder(self):
         for project in sorted(Projects.get_all(), key=lambda p: p.name):
@@ -65,7 +63,7 @@ class BricklayerService(service.Service):
                             d = threads.deferToThread(self.send_job, project.name, branch, release, version)
                         except Exception, e:
                             log.msg("tag not parsed: %s:%s" % (project.name, git.last_tag(release)))
-                
+
                 #if int(project.experimental) == 1:
                 #    for branch in project.branches():
                 #        git.checkout_remote_branch(branch)
@@ -74,12 +72,12 @@ class BricklayerService(service.Service):
                 #        if project.last_commit(branch) != git.last_commit(branch):
                 #            project.last_commit(branch, git.last_commit(branch))
                 #            d = threads.deferToThread(self.send_job, project.name, branch, 'experimental', None)
-                # 
+                #
                 #        git.checkout_branch("master")
 
             except Exception, e:
                 log.err(e)
-                
+
 
     def startService(self):
         service.Service.startService(self)

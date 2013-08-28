@@ -2,4 +2,6 @@ nose
 wsgiref
 twisted
 redis
+simplejson
 pyyaml
+pystache==0.4.1
